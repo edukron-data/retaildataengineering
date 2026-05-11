@@ -1,0 +1,15 @@
+{
+	"name": "retaildatapipeline2026",
+	"properties": {
+		"trustModeClaimForMi": {
+			"value": "Enabled",
+			"editable": true
+		}
+	},
+	"location": "eastus",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "6e35d26d-af13-4751-a58b-d82d66e8f65d",
+		"tenantId": "a90a3e51-3c2e-4181-9600-bc0e180533e9"
+	}
+}
