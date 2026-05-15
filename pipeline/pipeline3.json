@@ -1,0 +1,82 @@
+{
+	"name": "pipeline3",
+	"properties": {
+		"activities": [
+			{
+				"name": "SwitchActivity1",
+				"type": "Switch",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"cases": [
+						{
+							"value": "DEV",
+							"activities": [
+								{
+									"name": "Wait_DEV",
+									"type": "Wait",
+									"dependsOn": [],
+									"userProperties": [],
+									"typeProperties": {
+										"waitTimeInSeconds": 5
+									}
+								}
+							]
+						},
+						{
+							"value": "QA",
+							"activities": [
+								{
+									"name": "Wait_QA",
+									"type": "Wait",
+									"dependsOn": [],
+									"userProperties": [],
+									"typeProperties": {
+										"waitTimeInSeconds": 10
+									}
+								}
+							]
+						},
+						{
+							"value": "PROD",
+							"activities": [
+								{
+									"name": "Wait_PROD",
+									"type": "Wait",
+									"dependsOn": [],
+									"userProperties": [],
+									"typeProperties": {
+										"waitTimeInSeconds": 15
+									}
+								}
+							]
+						}
+					],
+					"defaultActivities": [
+						{
+							"name": "FailActivity",
+							"type": "Fail",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"message": "Invalid Environment",
+								"errorCode": "2001"
+							}
+						}
+					],
+					"expression": {
+						"value": "@pipeline().parameters.Environment",
+						"type": "Expression"
+					}
+				}
+			}
+		],
+		"parameters": {
+			"Environment": {
+				"type": "string",
+				"defaultValue": "DEV"
+			}
+		},
+		"annotations": []
+	}
+}
