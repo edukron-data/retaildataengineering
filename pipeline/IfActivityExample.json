@@ -1,0 +1,81 @@
+{
+	"name": "IfActivityExample",
+	"properties": {
+		"activities": [
+			{
+				"name": "CheckCondition",
+				"type": "IfCondition",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@equals(pipeline().parameters.environment, 'Production')",
+						"type": "Expression"
+					},
+					"ifFalseActivities": [
+						{
+							"name": "ExecuteDevPipeline",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"waitOnCompletion": true
+							}
+						}
+					],
+					"ifTrueActivities": [
+						{
+							"name": "ExecuteProductionPipeline",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"waitOnCompletion": true
+							}
+						},
+						{
+							"name": "LogProductionExecution",
+							"type": "WebActivity",
+							"dependsOn": [
+								{
+									"activity": "ExecuteProductionPipeline",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"method": "POST",
+								"url": "https://logservername/api/logs",
+								"body": {
+									"environment": "Production",
+									"status": "Success"
+								}
+							}
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"environment": {
+				"type": "string",
+				"defaultValue": "Development"
+			}
+		},
+		"annotations": []
+	}
+}
