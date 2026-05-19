@@ -1,0 +1,12 @@
+{
+	"name": "ds_sql_dynamic",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_lookup_sqldatabase",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": []
+	}
+}

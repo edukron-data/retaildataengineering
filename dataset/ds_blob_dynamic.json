@@ -1,0 +1,22 @@
+{
+	"name": "ds_blob_dynamic",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_blob_retailsourcedataedukron",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"container": "destination"
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"firstRowAsHeader": true,
+			"quoteChar": "\""
+		},
+		"schema": []
+	}
+}
