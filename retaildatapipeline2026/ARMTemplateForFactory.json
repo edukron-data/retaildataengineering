@@ -29,7 +29,7 @@
 		},
 		"LS_Product_REST_API_properties_typeProperties_url": {
 			"type": "string",
-			"defaultValue": "https://fakestoreapi.com/products"
+			"defaultValue": "http://api.openweathermap.org"
 		},
 		"ls_database_sqlserver_properties_typeProperties_server": {
 			"type": "string",
@@ -104,7 +104,7 @@
 						},
 						"inputs": [
 							{
-								"referenceName": "ds_rest_products",
+								"referenceName": "ds_rest_api",
 								"type": "DatasetReference",
 								"parameters": {}
 							}
@@ -127,7 +127,7 @@
 				]
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/ds_rest_products')]",
+				"[concat(variables('factoryId'), '/datasets/ds_rest_api')]",
 				"[concat(variables('factoryId'), '/datasets/ds_blob_dynamic')]"
 			]
 		},
@@ -651,7 +651,7 @@
 				"typeProperties": {
 					"location": {
 						"type": "AzureBlobStorageLocation",
-						"fileName": "products.json",
+						"fileName": "temperature.json",
 						"folderPath": "raw",
 						"container": "destination"
 					},
@@ -1633,6 +1633,65 @@
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/ds_sql_saleslt_salesorder')]",
 				"[concat(variables('factoryId'), '/datasets/ds_blob_saleslt_sales_csv')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/PL_OpenWeather_WebActivity')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Get_OpenWeather_Data",
+						"type": "WebActivity",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"method": "GET",
+							"headers": {},
+							"url": {
+								"value": "http://api.openweathermap.org/data/2.5/weather?appid=30d2e4f9114c412310bc7b361aed5f7a&q=@{pipeline().parameters.city}",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"city": {
+						"type": "String",
+						"defaultValue": "Bangalore"
+					}
+				},
+				"annotations": []
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_rest_api')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_Product_REST_API",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "RestResource",
+				"typeProperties": {
+					"relativeUrl": "data/2.5/weather?appid=30d2e4f9114c412310bc7b361aed5f7a&q=Hyderabad"
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LS_Product_REST_API')]"
 			]
 		}
 	]

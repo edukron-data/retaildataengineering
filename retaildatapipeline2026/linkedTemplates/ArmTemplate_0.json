@@ -29,7 +29,7 @@
 		},
 		"LS_Product_REST_API_properties_typeProperties_url": {
 			"type": "string",
-			"defaultValue": "https://fakestoreapi.com/products"
+			"defaultValue": "http://api.openweathermap.org"
 		},
 		"ls_database_sqlserver_properties_typeProperties_server": {
 			"type": "string",
@@ -151,6 +151,45 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/PL_OpenWeather_WebActivity')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Get_OpenWeather_Data",
+						"type": "WebActivity",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"method": "GET",
+							"headers": {},
+							"url": {
+								"value": "http://api.openweathermap.org/data/2.5/weather?appid=30d2e4f9114c412310bc7b361aed5f7a&q=@{pipeline().parameters.city}",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"city": {
+						"type": "String",
+						"defaultValue": "Bangalore"
+					}
+				},
+				"annotations": []
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/ds_blob_Datasets')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -203,7 +242,7 @@
 				"typeProperties": {
 					"location": {
 						"type": "AzureBlobStorageLocation",
-						"fileName": "products.json",
+						"fileName": "temperature.json",
 						"folderPath": "raw",
 						"container": "destination"
 					},
@@ -361,6 +400,26 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/ds_rest_api')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_Product_REST_API",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "RestResource",
+				"typeProperties": {
+					"relativeUrl": "data/2.5/weather?appid=30d2e4f9114c412310bc7b361aed5f7a&q=Hyderabad"
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LS_Product_REST_API')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/PL_REST_API_To_Blob_Products')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -404,7 +463,7 @@
 						},
 						"inputs": [
 							{
-								"referenceName": "ds_rest_products",
+								"referenceName": "ds_rest_api",
 								"type": "DatasetReference",
 								"parameters": {}
 							}
@@ -427,7 +486,7 @@
 				]
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/ds_rest_products')]",
+				"[concat(variables('factoryId'), '/datasets/ds_rest_api')]",
 				"[concat(variables('factoryId'), '/datasets/ds_blob_dynamic')]"
 			]
 		},
@@ -670,150 +729,6 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/ds_sql_saleslt_customer')]",
-				"[concat(variables('factoryId'), '/datasets/ds_blob_saleslt_sales_csv')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/DF_Filter_High_Value_Orders')]",
-			"type": "Microsoft.DataFactory/factories/dataflows",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"type": "MappingDataFlow",
-				"typeProperties": {
-					"sources": [
-						{
-							"dataset": {
-								"referenceName": "ds_sql_saleslt_salesorder",
-								"type": "DatasetReference"
-							},
-							"name": "SalesOrderSource"
-						}
-					],
-					"sinks": [
-						{
-							"dataset": {
-								"referenceName": "ds_blob_saleslt_sales_csv",
-								"type": "DatasetReference"
-							},
-							"name": "BlobSink"
-						}
-					],
-					"transformations": [
-						{
-							"name": "FilterHighValueOrders"
-						}
-					],
-					"scriptLines": [
-						"source(output(",
-						"          SalesOrderID as integer,",
-						"          CustomerID as integer,",
-						"          OrderDate as timestamp,",
-						"          TotalDue as decimal(18,2)",
-						"     ),",
-						"     allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     isolationLevel: 'READ_UNCOMMITTED',",
-						"     format: 'table') ~> SalesOrderSource",
-						"SalesOrderSource filter(TotalDue > 5000) ~> FilterHighValueOrders",
-						"FilterHighValueOrders sink(allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     partitionFileNames:['high_value_orders.csv']) ~> BlobSink"
-					]
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/ds_sql_saleslt_salesorder')]",
-				"[concat(variables('factoryId'), '/datasets/ds_blob_saleslt_sales_csv')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/DF_Join_Customer_Sales')]",
-			"type": "Microsoft.DataFactory/factories/dataflows",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"type": "MappingDataFlow",
-				"typeProperties": {
-					"sources": [
-						{
-							"dataset": {
-								"referenceName": "ds_sql_saleslt_customer",
-								"type": "DatasetReference"
-							},
-							"name": "CustomerSource"
-						},
-						{
-							"dataset": {
-								"referenceName": "ds_sql_saleslt_salesorder",
-								"type": "DatasetReference"
-							},
-							"name": "SalesOrderSource"
-						}
-					],
-					"sinks": [
-						{
-							"dataset": {
-								"referenceName": "ds_blob_saleslt_sales_csv",
-								"type": "DatasetReference"
-							},
-							"name": "BlobSink"
-						}
-					],
-					"transformations": [
-						{
-							"name": "JoinCustomerSales"
-						},
-						{
-							"name": "SelectFinalColumns"
-						}
-					],
-					"scriptLines": [
-						"source(output(",
-						"          CustomerID as integer,",
-						"          FirstName as string,",
-						"          LastName as string,",
-						"          EmailAddress as string",
-						"     ),",
-						"     allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     isolationLevel: 'READ_UNCOMMITTED',",
-						"     format: 'table') ~> CustomerSource",
-						"source(output(",
-						"          SalesOrderID as integer,",
-						"          CustomerID as integer,",
-						"          OrderDate as timestamp,",
-						"          TotalDue as decimal(18,2)",
-						"     ),",
-						"     allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     isolationLevel: 'READ_UNCOMMITTED',",
-						"     format: 'table') ~> SalesOrderSource",
-						"CustomerSource, SalesOrderSource join(CustomerSource@CustomerID == SalesOrderSource@CustomerID,",
-						"     joinType:'inner',",
-						"     matchType:'exact',",
-						"     ignoreSpaces: false,",
-						"     broadcast: 'auto')~> JoinCustomerSales",
-						"JoinCustomerSales select(mapColumn(",
-						"          CustomerID = CustomerSource@CustomerID,",
-						"          FirstName,",
-						"          LastName,",
-						"          EmailAddress,",
-						"          SalesOrderID,",
-						"          OrderDate,",
-						"          TotalDue",
-						"     ),",
-						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true) ~> SelectFinalColumns",
-						"SelectFinalColumns sink(allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     partitionFileNames:['customer_sales_join.csv'],",
-						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true) ~> BlobSink"
-					]
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/ds_sql_saleslt_customer')]",
-				"[concat(variables('factoryId'), '/datasets/ds_sql_saleslt_salesorder')]",
 				"[concat(variables('factoryId'), '/datasets/ds_blob_saleslt_sales_csv')]"
 			]
 		}

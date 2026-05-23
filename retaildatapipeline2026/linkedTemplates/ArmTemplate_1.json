@@ -13,6 +13,143 @@
 	},
 	"resources": [
 		{
+			"name": "[concat(parameters('factoryName'), '/DF_Filter_High_Value_Orders')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "ds_sql_saleslt_salesorder",
+								"type": "DatasetReference"
+							},
+							"name": "SalesOrderSource"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "ds_blob_saleslt_sales_csv",
+								"type": "DatasetReference"
+							},
+							"name": "BlobSink"
+						}
+					],
+					"transformations": [
+						{
+							"name": "FilterHighValueOrders"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          SalesOrderID as integer,",
+						"          CustomerID as integer,",
+						"          OrderDate as timestamp,",
+						"          TotalDue as decimal(18,2)",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     format: 'table') ~> SalesOrderSource",
+						"SalesOrderSource filter(TotalDue > 5000) ~> FilterHighValueOrders",
+						"FilterHighValueOrders sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     partitionFileNames:['high_value_orders.csv']) ~> BlobSink"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DF_Join_Customer_Sales')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "ds_sql_saleslt_customer",
+								"type": "DatasetReference"
+							},
+							"name": "CustomerSource"
+						},
+						{
+							"dataset": {
+								"referenceName": "ds_sql_saleslt_salesorder",
+								"type": "DatasetReference"
+							},
+							"name": "SalesOrderSource"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "ds_blob_saleslt_sales_csv",
+								"type": "DatasetReference"
+							},
+							"name": "BlobSink"
+						}
+					],
+					"transformations": [
+						{
+							"name": "JoinCustomerSales"
+						},
+						{
+							"name": "SelectFinalColumns"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          CustomerID as integer,",
+						"          FirstName as string,",
+						"          LastName as string,",
+						"          EmailAddress as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     format: 'table') ~> CustomerSource",
+						"source(output(",
+						"          SalesOrderID as integer,",
+						"          CustomerID as integer,",
+						"          OrderDate as timestamp,",
+						"          TotalDue as decimal(18,2)",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     format: 'table') ~> SalesOrderSource",
+						"CustomerSource, SalesOrderSource join(CustomerSource@CustomerID == SalesOrderSource@CustomerID,",
+						"     joinType:'inner',",
+						"     matchType:'exact',",
+						"     ignoreSpaces: false,",
+						"     broadcast: 'auto')~> JoinCustomerSales",
+						"JoinCustomerSales select(mapColumn(",
+						"          CustomerID = CustomerSource@CustomerID,",
+						"          FirstName,",
+						"          LastName,",
+						"          EmailAddress,",
+						"          SalesOrderID,",
+						"          OrderDate,",
+						"          TotalDue",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> SelectFinalColumns",
+						"SelectFinalColumns sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     partitionFileNames:['customer_sales_join.csv'],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> BlobSink"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/DF_Lookup_Customer_Orders')]",
 			"type": "Microsoft.DataFactory/factories/dataflows",
 			"apiVersion": "2018-06-01",
@@ -752,6 +889,8 @@
 				"annotations": []
 			},
 			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/DF_Filter_High_Value_Orders')]",
+				"[concat(variables('factoryId'), '/dataflows/DF_Join_Customer_Sales')]",
 				"[concat(variables('factoryId'), '/dataflows/DF_Sort_Sales_Orders')]",
 				"[concat(variables('factoryId'), '/dataflows/DF_Select_Customer_Columns')]",
 				"[concat(variables('factoryId'), '/dataflows/DF_Remove_Duplicate_Customers')]",

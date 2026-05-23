@@ -29,7 +29,7 @@
 		},
 		"LS_Product_REST_API_properties_typeProperties_url": {
 			"type": "string",
-			"defaultValue": "https://fakestoreapi.com/products"
+			"defaultValue": "http://api.openweathermap.org"
 		},
 		"ls_database_sqlserver_properties_typeProperties_server": {
 			"type": "string",

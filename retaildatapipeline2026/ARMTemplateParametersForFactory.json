@@ -21,7 +21,7 @@
 			"value": "0521-034638-65vdh7du"
 		},
 		"LS_Product_REST_API_properties_typeProperties_url": {
-			"value": "https://fakestoreapi.com/products"
+			"value": "http://api.openweathermap.org"
 		},
 		"ls_database_sqlserver_properties_typeProperties_server": {
 			"value": "retaildataserver2026.database.windows.net"
