@@ -16,7 +16,13 @@
 				"typeProperties": {
 					"dataflow": {
 						"referenceName": "DF_Filter_High_Value_Orders",
-						"type": "DataFlowReference"
+						"type": "DataFlowReference",
+						"datasetParameters": {
+							"BlobSink": {
+								"folderPath": "saleslt/filter",
+								"fileName": "high_value_orders.csv"
+							}
+						}
 					},
 					"compute": {
 						"coreCount": 8,
@@ -46,7 +52,13 @@
 				"typeProperties": {
 					"dataflow": {
 						"referenceName": "DF_Derived_Column_Customer",
-						"type": "DataFlowReference"
+						"type": "DataFlowReference",
+						"datasetParameters": {
+							"BlobSink": {
+								"folderPath": "saleslt/derived",
+								"fileName": "customer_fullname.csv"
+							}
+						}
 					},
 					"compute": {
 						"coreCount": 8,
@@ -76,7 +88,13 @@
 				"typeProperties": {
 					"dataflow": {
 						"referenceName": "DF_Aggregate_Customer_Sales",
-						"type": "DataFlowReference"
+						"type": "DataFlowReference",
+						"datasetParameters": {
+							"BlobSink": {
+								"folderPath": "saleslt/aggregate",
+								"fileName": "customer_aggregate.csv"
+							}
+						}
 					},
 					"compute": {
 						"coreCount": 8,
@@ -106,7 +124,21 @@
 				"typeProperties": {
 					"dataflow": {
 						"referenceName": "DF_Conditional_Split_Orders",
-						"type": "DataFlowReference"
+						"type": "DataFlowReference",
+						"datasetParameters": {
+							"HighValueSink": {
+								"folderPath": "saleslt/split",
+								"fileName": "high_value.csv"
+							},
+							"MediumValueSink": {
+								"folderPath": "saleslt/split",
+								"fileName": "medium_value.csv"
+							},
+							"LowValueSink": {
+								"folderPath": "saleslt/split",
+								"fileName": "low_value.csv"
+							}
+						}
 					},
 					"compute": {
 						"coreCount": 8,
@@ -136,7 +168,13 @@
 				"typeProperties": {
 					"dataflow": {
 						"referenceName": "DF_Join_Customer_Sales",
-						"type": "DataFlowReference"
+						"type": "DataFlowReference",
+						"datasetParameters": {
+							"BlobSink": {
+								"folderPath": "saleslt/join",
+								"fileName": "customer_sales_join.csv"
+							}
+						}
 					},
 					"compute": {
 						"coreCount": 8,
@@ -166,7 +204,13 @@
 				"typeProperties": {
 					"dataflow": {
 						"referenceName": "DF_Sort_Sales_Orders",
-						"type": "DataFlowReference"
+						"type": "DataFlowReference",
+						"datasetParameters": {
+							"BlobSink": {
+								"folderPath": "saleslt/sort",
+								"fileName": "sorted_sales_orders.csv"
+							}
+						}
 					},
 					"compute": {
 						"coreCount": 8,
@@ -196,7 +240,13 @@
 				"typeProperties": {
 					"dataflow": {
 						"referenceName": "DF_Select_Customer_Columns",
-						"type": "DataFlowReference"
+						"type": "DataFlowReference",
+						"datasetParameters": {
+							"BlobSink": {
+								"folderPath": "saleslt/select",
+								"fileName": "selected_customer_columns.csv"
+							}
+						}
 					},
 					"compute": {
 						"coreCount": 8,
@@ -226,7 +276,13 @@
 				"typeProperties": {
 					"dataflow": {
 						"referenceName": "DF_Remove_Duplicate_Customers",
-						"type": "DataFlowReference"
+						"type": "DataFlowReference",
+						"datasetParameters": {
+							"BlobSink": {
+								"folderPath": "saleslt/deduplicate",
+								"fileName": "unique_customers.csv"
+							}
+						}
 					},
 					"compute": {
 						"coreCount": 8,
@@ -256,7 +312,13 @@
 				"typeProperties": {
 					"dataflow": {
 						"referenceName": "DF_Customer_Name_Cleanup",
-						"type": "DataFlowReference"
+						"type": "DataFlowReference",
+						"datasetParameters": {
+							"BlobSink": {
+								"folderPath": "saleslt/cleanup",
+								"fileName": "clean_customer_names.csv"
+							}
+						}
 					},
 					"compute": {
 						"coreCount": 8,
@@ -286,7 +348,13 @@
 				"typeProperties": {
 					"dataflow": {
 						"referenceName": "DF_Lookup_Customer_Orders",
-						"type": "DataFlowReference"
+						"type": "DataFlowReference",
+						"datasetParameters": {
+							"BlobSink": {
+								"folderPath": "saleslt/lookup",
+								"fileName": "lookup_customer_orders.csv"
+							}
+						}
 					},
 					"compute": {
 						"coreCount": 8,
@@ -296,9 +364,6 @@
 				}
 			}
 		],
-		"annotations": [
-			"SalesLT Dataflow Demo",
-			"SQL Server to Blob CSV"
-		]
+		"annotations": []
 	}
 }
