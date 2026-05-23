@@ -1,0 +1,84 @@
+{
+	"name": "DF_SalesLT_Customer_Sales_To_Blob",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "ds_sql_saleslt_customer",
+						"type": "DatasetReference"
+					},
+					"name": "CustomerSource"
+				},
+				{
+					"dataset": {
+						"referenceName": "ds_sql_saleslt_salesorder",
+						"type": "DatasetReference"
+					},
+					"name": "SalesOrderSource"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "ds_blob_saleslt_sales_csv",
+						"type": "DatasetReference"
+					},
+					"name": "BlobCsvSink"
+				}
+			],
+			"transformations": [
+				{
+					"name": "JoinCustomerSales"
+				},
+				{
+					"name": "SelectRequiredColumns"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          CustomerID as integer,",
+				"          FirstName as string,",
+				"          LastName as string,",
+				"          EmailAddress as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> CustomerSource",
+				"source(output(",
+				"          SalesOrderID as integer,",
+				"          CustomerID as integer,",
+				"          OrderDate as timestamp,",
+				"          TotalDue as decimal(18,2)",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> SalesOrderSource",
+				"CustomerSource, SalesOrderSource join(CustomerSource@CustomerID == SalesOrderSource@CustomerID,",
+				"     joinType:'inner',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> JoinCustomerSales",
+				"JoinCustomerSales select(mapColumn(",
+				"          CustomerID = CustomerSource@CustomerID,",
+				"          FirstName,",
+				"          LastName,",
+				"          EmailAddress,",
+				"          SalesOrderID,",
+				"          OrderDate,",
+				"          TotalDue",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> SelectRequiredColumns",
+				"SelectRequiredColumns sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     partitionFileNames:['saleslt_customer_sales.csv'],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> BlobCsvSink"
+			]
+		}
+	}
+}
