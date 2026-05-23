@@ -1,0 +1,15 @@
+{
+	"name": "ds_rest_api",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_Product_REST_API",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "RestResource",
+		"typeProperties": {
+			"relativeUrl": "data/2.5/weather?appid=30d2e4f9114c412310bc7b361aed5f7a&q=Hyderabad"
+		},
+		"schema": []
+	}
+}

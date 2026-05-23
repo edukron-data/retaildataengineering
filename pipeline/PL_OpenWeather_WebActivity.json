@@ -1,0 +1,32 @@
+{
+	"name": "PL_OpenWeather_WebActivity",
+	"properties": {
+		"activities": [
+			{
+				"name": "Get_OpenWeather_Data",
+				"type": "WebActivity",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"method": "GET",
+					"url": {
+						"value": "http://api.openweathermap.org/data/2.5/weather?appid=30d2e4f9114c412310bc7b361aed5f7a&q=@{pipeline().parameters.city}",
+						"type": "Expression"
+					}
+				}
+			}
+		],
+		"parameters": {
+			"city": {
+				"type": "String",
+				"defaultValue": "Bangalore"
+			}
+		},
+		"annotations": []
+	}
+}

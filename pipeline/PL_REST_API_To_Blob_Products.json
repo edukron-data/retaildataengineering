@@ -40,7 +40,7 @@
 				},
 				"inputs": [
 					{
-						"referenceName": "ds_rest_products",
+						"referenceName": "ds_rest_api",
 						"type": "DatasetReference"
 					}
 				],
