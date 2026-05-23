@@ -4,7 +4,7 @@
 		"annotations": [],
 		"type": "RestService",
 		"typeProperties": {
-			"url": "https://fakestoreapi.com/products",
+			"url": "http://api.openweathermap.org",
 			"enableServerCertificateValidation": true,
 			"authenticationType": "Anonymous"
 		}
