@@ -1,0 +1,37 @@
+{
+	"name": "PL_Run_SalesLT_DataFlow_To_Blob",
+	"properties": {
+		"activities": [
+			{
+				"name": "Run_DataFlow_Customer_Sales_To_Blob",
+				"type": "ExecuteDataFlow",
+				"dependsOn": [],
+				"policy": {
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataflow": {
+						"referenceName": "DF_SalesLT_Customer_Sales_To_Blob",
+						"type": "DataFlowReference",
+						"datasetParameters": {
+							"BlobCsvSink": {
+								"folderPath": "saleslt/customer_sales",
+								"fileName": "saleslt_customer_sales.csv"
+							}
+						}
+					},
+					"compute": {
+						"coreCount": 8,
+						"computeType": "General"
+					},
+					"traceLevel": "Fine"
+				}
+			}
+		],
+		"annotations": []
+	}
+}

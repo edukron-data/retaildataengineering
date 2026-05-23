@@ -1,0 +1,67 @@
+{
+	"name": "DF_Conditional_Split_Orders",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "ds_sql_saleslt_salesorder",
+						"type": "DatasetReference"
+					},
+					"name": "SalesOrderSource"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "ds_blob_saleslt_sales_csv",
+						"type": "DatasetReference"
+					},
+					"name": "HighValueSink"
+				},
+				{
+					"dataset": {
+						"referenceName": "ds_blob_saleslt_sales_csv",
+						"type": "DatasetReference"
+					},
+					"name": "MediumValueSink"
+				},
+				{
+					"dataset": {
+						"referenceName": "ds_blob_saleslt_sales_csv",
+						"type": "DatasetReference"
+					},
+					"name": "LowValueSink"
+				}
+			],
+			"transformations": [
+				{
+					"name": "ConditionalSplitOrders"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          SalesOrderID as integer,",
+				"          TotalDue as decimal(18,2)",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> SalesOrderSource",
+				"SalesOrderSource split(TotalDue >= 10000,",
+				"     TotalDue >= 5000 && TotalDue < 10000,",
+				"     disjoint: false) ~> ConditionalSplitOrders@(HighValue, MediumValue, LowValue)",
+				" sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     partitionFileNames:['high_value.csv']) ~> HighValueSink",
+				" sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     partitionFileNames:['medium_value.csv']) ~> MediumValueSink",
+				" sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     partitionFileNames:['low_value.csv']) ~> LowValueSink"
+			]
+		}
+	}
+}

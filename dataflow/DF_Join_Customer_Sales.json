@@ -1,0 +1,66 @@
+{
+	"name": "DF_Join_Customer_Sales",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "ds_sql_saleslt_customer",
+						"type": "DatasetReference"
+					},
+					"name": "CustomerSource"
+				},
+				{
+					"dataset": {
+						"referenceName": "ds_sql_saleslt_salesorder",
+						"type": "DatasetReference"
+					},
+					"name": "SalesOrderSource"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "ds_blob_saleslt_sales_csv",
+						"type": "DatasetReference"
+					},
+					"name": "BlobSink"
+				}
+			],
+			"transformations": [
+				{
+					"name": "JoinCustomerSales"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          CustomerID as integer,",
+				"          FirstName as string,",
+				"          LastName as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> CustomerSource",
+				"source(output(",
+				"          SalesOrderID as integer,",
+				"          CustomerID as integer,",
+				"          TotalDue as decimal(18,2)",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> SalesOrderSource",
+				"CustomerSource, SalesOrderSource join(CustomerSource@CustomerID == SalesOrderSource@CustomerID,",
+				"     joinType:'inner',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> JoinCustomerSales",
+				"JoinCustomerSales sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     partitionFileNames:['customer_sales_join.csv']) ~> BlobSink"
+			]
+		}
+	}
+}

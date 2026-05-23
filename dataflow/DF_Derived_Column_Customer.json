@@ -1,0 +1,47 @@
+{
+	"name": "DF_Derived_Column_Customer",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "ds_sql_saleslt_customer",
+						"type": "DatasetReference"
+					},
+					"name": "CustomerSource"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "ds_blob_saleslt_sales_csv",
+						"type": "DatasetReference"
+					},
+					"name": "BlobSink"
+				}
+			],
+			"transformations": [
+				{
+					"name": "DerivedCustomerColumns"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          CustomerID as integer,",
+				"          FirstName as string,",
+				"          LastName as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> CustomerSource",
+				"CustomerSource derive(FullName = FirstName + ' ' + LastName,",
+				"          LoadDate = currentDate()) ~> DerivedCustomerColumns",
+				"DerivedCustomerColumns sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     partitionFileNames:['customer_fullname.csv']) ~> BlobSink"
+			]
+		}
+	}
+}

@@ -1,0 +1,47 @@
+{
+	"name": "DF_Aggregate_Customer_Sales",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "ds_sql_saleslt_salesorder",
+						"type": "DatasetReference"
+					},
+					"name": "SalesOrderSource"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "ds_blob_saleslt_sales_csv",
+						"type": "DatasetReference"
+					},
+					"name": "BlobSink"
+				}
+			],
+			"transformations": [
+				{
+					"name": "AggregateCustomerSales"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          CustomerID as integer,",
+				"          TotalDue as decimal(18,2)",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> SalesOrderSource",
+				"SalesOrderSource aggregate(groupBy(CustomerID),",
+				"     TotalSales = sum(TotalDue),",
+				"          OrderCount = count(CustomerID)) ~> AggregateCustomerSales",
+				"AggregateCustomerSales sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     partitionFileNames:['customer_aggregate.csv']) ~> BlobSink"
+			]
+		}
+	}
+}

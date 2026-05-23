@@ -1,0 +1,50 @@
+{
+	"name": "DF_Remove_Duplicate_Customers",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "ds_sql_saleslt_customer",
+						"type": "DatasetReference"
+					},
+					"name": "CustomerSource"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "ds_blob_saleslt_sales_csv",
+						"type": "DatasetReference"
+					},
+					"name": "BlobSink"
+				}
+			],
+			"transformations": [
+				{
+					"name": "AggregateUniqueCustomer"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          CustomerID as integer,",
+				"          FirstName as string,",
+				"          LastName as string,",
+				"          EmailAddress as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> CustomerSource",
+				"CustomerSource aggregate(groupBy(CustomerID),",
+				"     FirstName = first(FirstName),",
+				"          LastName = first(LastName),",
+				"          EmailAddress = first(EmailAddress)) ~> AggregateUniqueCustomer",
+				"AggregateUniqueCustomer sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     partitionFileNames:['unique_customers.csv']) ~> BlobSink"
+			]
+		}
+	}
+}

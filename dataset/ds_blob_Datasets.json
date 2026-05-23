@@ -1,0 +1,34 @@
+{
+	"name": "ds_blob_Datasets",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_blob_retailsourcedataedukron",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"folderPath": {
+				"type": "String"
+			},
+			"fileName": {
+				"type": "String"
+			}
+		},
+		"annotations": [],
+		"type": "Json",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"fileName": {
+					"value": "@dataset().fileName",
+					"type": "Expression"
+				},
+				"folderPath": {
+					"value": "@dataset().folderPath",
+					"type": "Expression"
+				},
+				"container": "source"
+			}
+		},
+		"schema": []
+	}
+}
