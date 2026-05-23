@@ -43,6 +43,8 @@
 			"scriptLines": [
 				"source(output(",
 				"          SalesOrderID as integer,",
+				"          CustomerID as integer,",
+				"          OrderDate as timestamp,",
 				"          TotalDue as decimal(18,2)",
 				"     ),",
 				"     allowSchemaDrift: true,",
@@ -51,16 +53,22 @@
 				"     format: 'table') ~> SalesOrderSource",
 				"SalesOrderSource split(TotalDue >= 10000,",
 				"     TotalDue >= 5000 && TotalDue < 10000,",
-				"     disjoint: false) ~> ConditionalSplitOrders@(HighValue, MediumValue, LowValue)",
-				" sink(allowSchemaDrift: true,",
+				"     disjoint: true) ~> ConditionalSplitOrders@(HighValue, MediumValue, LowValue)",
+				"ConditionalSplitOrders@HighValue sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
-				"     partitionFileNames:['high_value.csv']) ~> HighValueSink",
-				" sink(allowSchemaDrift: true,",
+				"     partitionFileNames:['high_value.csv'],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> HighValueSink",
+				"ConditionalSplitOrders@MediumValue sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
-				"     partitionFileNames:['medium_value.csv']) ~> MediumValueSink",
-				" sink(allowSchemaDrift: true,",
+				"     partitionFileNames:['medium_value.csv'],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> MediumValueSink",
+				"ConditionalSplitOrders@LowValue sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
-				"     partitionFileNames:['low_value.csv']) ~> LowValueSink"
+				"     partitionFileNames:['low_value.csv'],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> LowValueSink"
 			]
 		}
 	}

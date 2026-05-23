@@ -31,6 +31,9 @@
 			"transformations": [
 				{
 					"name": "LookupCustomerOrders"
+				},
+				{
+					"name": "SelectFinalColumns"
 				}
 			],
 			"scriptLines": [
@@ -58,9 +61,22 @@
 				"     multiple: false,",
 				"     pickup: 'first',",
 				"     broadcast: 'auto')~> LookupCustomerOrders",
-				"LookupCustomerOrders sink(allowSchemaDrift: true,",
+				"LookupCustomerOrders select(mapColumn(",
+				"          CustomerID = SalesOrderSource@CustomerID,",
+				"          SalesOrderID,",
+				"          OrderDate,",
+				"          TotalDue,",
+				"          FirstName,",
+				"          LastName,",
+				"          EmailAddress",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> SelectFinalColumns",
+				"SelectFinalColumns sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
-				"     partitionFileNames:['lookup_customer_orders.csv']) ~> BlobSink"
+				"     partitionFileNames:['lookup_customer_orders.csv'],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> BlobSink"
 			]
 		}
 	}

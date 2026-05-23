@@ -31,13 +31,17 @@
 			"transformations": [
 				{
 					"name": "JoinCustomerSales"
+				},
+				{
+					"name": "SelectFinalColumns"
 				}
 			],
 			"scriptLines": [
 				"source(output(",
 				"          CustomerID as integer,",
 				"          FirstName as string,",
-				"          LastName as string",
+				"          LastName as string,",
+				"          EmailAddress as string",
 				"     ),",
 				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
@@ -46,6 +50,7 @@
 				"source(output(",
 				"          SalesOrderID as integer,",
 				"          CustomerID as integer,",
+				"          OrderDate as timestamp,",
 				"          TotalDue as decimal(18,2)",
 				"     ),",
 				"     allowSchemaDrift: true,",
@@ -57,9 +62,22 @@
 				"     matchType:'exact',",
 				"     ignoreSpaces: false,",
 				"     broadcast: 'auto')~> JoinCustomerSales",
-				"JoinCustomerSales sink(allowSchemaDrift: true,",
+				"JoinCustomerSales select(mapColumn(",
+				"          CustomerID = CustomerSource@CustomerID,",
+				"          FirstName,",
+				"          LastName,",
+				"          EmailAddress,",
+				"          SalesOrderID,",
+				"          OrderDate,",
+				"          TotalDue",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> SelectFinalColumns",
+				"SelectFinalColumns sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
-				"     partitionFileNames:['customer_sales_join.csv']) ~> BlobSink"
+				"     partitionFileNames:['customer_sales_join.csv'],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> BlobSink"
 			]
 		}
 	}
