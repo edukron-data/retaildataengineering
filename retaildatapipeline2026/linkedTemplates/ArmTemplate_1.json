@@ -1,0 +1,811 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "retaildatapipeline2026"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/DF_Lookup_Customer_Orders')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "ds_sql_saleslt_customer",
+								"type": "DatasetReference"
+							},
+							"name": "CustomerSource"
+						},
+						{
+							"dataset": {
+								"referenceName": "ds_sql_saleslt_salesorder",
+								"type": "DatasetReference"
+							},
+							"name": "SalesOrderSource"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "ds_blob_saleslt_sales_csv",
+								"type": "DatasetReference"
+							},
+							"name": "BlobSink"
+						}
+					],
+					"transformations": [
+						{
+							"name": "LookupCustomerOrders"
+						},
+						{
+							"name": "SelectFinalColumns"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          CustomerID as integer,",
+						"          FirstName as string,",
+						"          LastName as string,",
+						"          EmailAddress as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     format: 'table') ~> CustomerSource",
+						"source(output(",
+						"          SalesOrderID as integer,",
+						"          CustomerID as integer,",
+						"          OrderDate as timestamp,",
+						"          TotalDue as decimal(18,2)",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     format: 'table') ~> SalesOrderSource",
+						"SalesOrderSource, CustomerSource lookup(SalesOrderSource@CustomerID == CustomerSource@CustomerID,",
+						"     multiple: false,",
+						"     pickup: 'first',",
+						"     broadcast: 'auto')~> LookupCustomerOrders",
+						"LookupCustomerOrders select(mapColumn(",
+						"          CustomerID = SalesOrderSource@CustomerID,",
+						"          SalesOrderID,",
+						"          OrderDate,",
+						"          TotalDue,",
+						"          FirstName,",
+						"          LastName,",
+						"          EmailAddress",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> SelectFinalColumns",
+						"SelectFinalColumns sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     partitionFileNames:['lookup_customer_orders.csv'],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> BlobSink"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DF_Remove_Duplicate_Customers')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "ds_sql_saleslt_customer",
+								"type": "DatasetReference"
+							},
+							"name": "CustomerSource"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "ds_blob_saleslt_sales_csv",
+								"type": "DatasetReference"
+							},
+							"name": "BlobSink"
+						}
+					],
+					"transformations": [
+						{
+							"name": "AggregateUniqueCustomer"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          CustomerID as integer,",
+						"          FirstName as string,",
+						"          LastName as string,",
+						"          EmailAddress as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     format: 'table') ~> CustomerSource",
+						"CustomerSource aggregate(groupBy(CustomerID),",
+						"     FirstName = first(FirstName),",
+						"          LastName = first(LastName),",
+						"          EmailAddress = first(EmailAddress)) ~> AggregateUniqueCustomer",
+						"AggregateUniqueCustomer sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     partitionFileNames:['unique_customers.csv']) ~> BlobSink"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DF_SalesLT_Customer_Sales_To_Blob')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "ds_sql_saleslt_customer",
+								"type": "DatasetReference"
+							},
+							"name": "CustomerSource"
+						},
+						{
+							"dataset": {
+								"referenceName": "ds_sql_saleslt_salesorder",
+								"type": "DatasetReference"
+							},
+							"name": "SalesOrderSource"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "ds_blob_saleslt_sales_csv",
+								"type": "DatasetReference"
+							},
+							"name": "BlobCsvSink"
+						}
+					],
+					"transformations": [
+						{
+							"name": "JoinCustomerSales"
+						},
+						{
+							"name": "SelectRequiredColumns"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          CustomerID as integer,",
+						"          FirstName as string,",
+						"          LastName as string,",
+						"          EmailAddress as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     format: 'table') ~> CustomerSource",
+						"source(output(",
+						"          SalesOrderID as integer,",
+						"          CustomerID as integer,",
+						"          OrderDate as timestamp,",
+						"          TotalDue as decimal(18,2)",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     format: 'table') ~> SalesOrderSource",
+						"CustomerSource, SalesOrderSource join(CustomerSource@CustomerID == SalesOrderSource@CustomerID,",
+						"     joinType:'inner',",
+						"     matchType:'exact',",
+						"     ignoreSpaces: false,",
+						"     broadcast: 'auto')~> JoinCustomerSales",
+						"JoinCustomerSales select(mapColumn(",
+						"          CustomerID = CustomerSource@CustomerID,",
+						"          FirstName,",
+						"          LastName,",
+						"          EmailAddress,",
+						"          SalesOrderID,",
+						"          OrderDate,",
+						"          TotalDue",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> SelectRequiredColumns",
+						"SelectRequiredColumns sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     partitionFileNames:['saleslt_customer_sales.csv'],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> BlobCsvSink"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DF_Select_Customer_Columns')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "ds_sql_saleslt_customer",
+								"type": "DatasetReference"
+							},
+							"name": "CustomerSource"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "ds_blob_saleslt_sales_csv",
+								"type": "DatasetReference"
+							},
+							"name": "BlobSink"
+						}
+					],
+					"transformations": [
+						{
+							"name": "SelectCustomerColumns"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          CustomerID as integer,",
+						"          FirstName as string,",
+						"          LastName as string,",
+						"          EmailAddress as string,",
+						"          Phone as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     format: 'table') ~> CustomerSource",
+						"CustomerSource select(mapColumn(",
+						"          CustomerID,",
+						"          FirstName,",
+						"          LastName,",
+						"          EmailAddress",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> SelectCustomerColumns",
+						"SelectCustomerColumns sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     partitionFileNames:['selected_customer_columns.csv']) ~> BlobSink"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DF_Sort_Sales_Orders')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "ds_sql_saleslt_salesorder",
+								"type": "DatasetReference"
+							},
+							"name": "SalesOrderSource"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "ds_blob_saleslt_sales_csv",
+								"type": "DatasetReference"
+							},
+							"name": "BlobSink"
+						}
+					],
+					"transformations": [
+						{
+							"name": "SortOrders"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          SalesOrderID as integer,",
+						"          CustomerID as integer,",
+						"          OrderDate as timestamp,",
+						"          TotalDue as decimal(18,2)",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     format: 'table') ~> SalesOrderSource",
+						"SalesOrderSource sort(desc(TotalDue, false)) ~> SortOrders",
+						"SortOrders sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     partitionFileNames:['sorted_sales_orders.csv']) ~> BlobSink"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/PL_Run_All_10_SalesLT_DataFlows')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Run_01_Filter_High_Value_Orders",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "DF_Filter_High_Value_Orders",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"SalesOrderSource": {},
+									"BlobSink": {
+										"folderPath": "saleslt/filter",
+										"fileName": "high_value_orders.csv"
+									}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "Run_02_Derived_Column_Customer",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [
+							{
+								"activity": "Run_01_Filter_High_Value_Orders",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "DF_Derived_Column_Customer",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"CustomerSource": {},
+									"BlobSink": {
+										"folderPath": "saleslt/derived",
+										"fileName": "customer_fullname.csv"
+									}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "Run_03_Aggregate_Customer_Sales",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [
+							{
+								"activity": "Run_02_Derived_Column_Customer",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "DF_Aggregate_Customer_Sales",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"SalesOrderSource": {},
+									"BlobSink": {
+										"folderPath": "saleslt/aggregate",
+										"fileName": "customer_aggregate.csv"
+									}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "Run_04_Conditional_Split_Orders",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [
+							{
+								"activity": "Run_03_Aggregate_Customer_Sales",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "DF_Conditional_Split_Orders",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"SalesOrderSource": {},
+									"HighValueSink": {
+										"folderPath": "saleslt/split",
+										"fileName": "high_value.csv"
+									},
+									"MediumValueSink": {
+										"folderPath": "saleslt/split",
+										"fileName": "medium_value.csv"
+									},
+									"LowValueSink": {
+										"folderPath": "saleslt/split",
+										"fileName": "low_value.csv"
+									}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "Run_05_Join_Customer_Sales",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [
+							{
+								"activity": "Run_04_Conditional_Split_Orders",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "DF_Join_Customer_Sales",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"CustomerSource": {},
+									"SalesOrderSource": {},
+									"BlobSink": {
+										"folderPath": "saleslt/join",
+										"fileName": "customer_sales_join.csv"
+									}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "Run_06_Sort_Sales_Orders",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [
+							{
+								"activity": "Run_05_Join_Customer_Sales",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "DF_Sort_Sales_Orders",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"SalesOrderSource": {},
+									"BlobSink": {
+										"folderPath": "saleslt/sort",
+										"fileName": "sorted_sales_orders.csv"
+									}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "Run_07_Select_Customer_Columns",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [
+							{
+								"activity": "Run_06_Sort_Sales_Orders",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "DF_Select_Customer_Columns",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"CustomerSource": {},
+									"BlobSink": {
+										"folderPath": "saleslt/select",
+										"fileName": "selected_customer_columns.csv"
+									}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "Run_08_Remove_Duplicate_Customers",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [
+							{
+								"activity": "Run_07_Select_Customer_Columns",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "DF_Remove_Duplicate_Customers",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"CustomerSource": {},
+									"BlobSink": {
+										"folderPath": "saleslt/deduplicate",
+										"fileName": "unique_customers.csv"
+									}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "Run_09_Customer_Name_Cleanup",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [
+							{
+								"activity": "Run_08_Remove_Duplicate_Customers",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "DF_Customer_Name_Cleanup",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"CustomerSource": {},
+									"BlobSink": {
+										"folderPath": "saleslt/cleanup",
+										"fileName": "clean_customer_names.csv"
+									}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "Run_10_Lookup_Customer_Orders",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [
+							{
+								"activity": "Run_09_Customer_Name_Cleanup",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "DF_Lookup_Customer_Orders",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"CustomerSource": {},
+									"SalesOrderSource": {},
+									"BlobSink": {
+										"folderPath": "saleslt/lookup",
+										"fileName": "lookup_customer_orders.csv"
+									}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/DF_Sort_Sales_Orders')]",
+				"[concat(variables('factoryId'), '/dataflows/DF_Select_Customer_Columns')]",
+				"[concat(variables('factoryId'), '/dataflows/DF_Remove_Duplicate_Customers')]",
+				"[concat(variables('factoryId'), '/dataflows/DF_Lookup_Customer_Orders')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/PL_Run_SalesLT_DataFlow_To_Blob')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Run_DataFlow_Customer_Sales_To_Blob",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "DF_SalesLT_Customer_Sales_To_Blob",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"CustomerSource": {},
+									"SalesOrderSource": {},
+									"BlobCsvSink": {
+										"folderPath": "saleslt/customer_sales",
+										"fileName": "saleslt_customer_sales.csv"
+									}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/DF_SalesLT_Customer_Sales_To_Blob')]"
+			]
+		}
+	]
+}

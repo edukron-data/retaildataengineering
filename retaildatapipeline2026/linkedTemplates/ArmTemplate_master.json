@@ -7,9 +7,53 @@
 			"metadata": "Data Factory name",
 			"defaultValue": "retaildatapipeline2026"
 		},
+		"AzureDatabricks1_accessToken": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accessToken' of 'AzureDatabricks1'"
+		},
 		"ls_blob_retailsourcedataedukron_connectionString": {
 			"type": "secureString",
 			"metadata": "Secure string for 'connectionString' of 'ls_blob_retailsourcedataedukron'"
+		},
+		"ls_database_sqlserver_password": {
+			"type": "secureString",
+			"metadata": "Secure string for 'password' of 'ls_database_sqlserver'"
+		},
+		"ls_lookup_sqldatabase_password": {
+			"type": "secureString",
+			"metadata": "Secure string for 'password' of 'ls_lookup_sqldatabase'"
+		},
+		"AzureDatabricks1_properties_typeProperties_existingClusterId": {
+			"type": "string",
+			"defaultValue": "0521-034638-65vdh7du"
+		},
+		"LS_Product_REST_API_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://fakestoreapi.com/products"
+		},
+		"ls_database_sqlserver_properties_typeProperties_server": {
+			"type": "string",
+			"defaultValue": "retaildataserver2026.database.windows.net"
+		},
+		"ls_database_sqlserver_properties_typeProperties_database": {
+			"type": "string",
+			"defaultValue": "retaildataengineeringjan2026"
+		},
+		"ls_database_sqlserver_properties_typeProperties_userName": {
+			"type": "string",
+			"defaultValue": "edukron"
+		},
+		"ls_lookup_sqldatabase_properties_typeProperties_server": {
+			"type": "string",
+			"defaultValue": "retaildataserver2026.database.windows.net"
+		},
+		"ls_lookup_sqldatabase_properties_typeProperties_database": {
+			"type": "string",
+			"defaultValue": "retaildataengineeringjan2026"
+		},
+		"ls_lookup_sqldatabase_properties_typeProperties_userName": {
+			"type": "string",
+			"defaultValue": "Edukron"
 		},
 		"containerUri": {
 			"type": "string",
@@ -38,12 +82,65 @@
 					"factoryName": {
 						"value": "[parameters('factoryName')]"
 					},
+					"AzureDatabricks1_accessToken": {
+						"value": "[parameters('AzureDatabricks1_accessToken')]"
+					},
 					"ls_blob_retailsourcedataedukron_connectionString": {
 						"value": "[parameters('ls_blob_retailsourcedataedukron_connectionString')]"
+					},
+					"ls_database_sqlserver_password": {
+						"value": "[parameters('ls_database_sqlserver_password')]"
+					},
+					"ls_lookup_sqldatabase_password": {
+						"value": "[parameters('ls_lookup_sqldatabase_password')]"
+					},
+					"AzureDatabricks1_properties_typeProperties_existingClusterId": {
+						"value": "[parameters('AzureDatabricks1_properties_typeProperties_existingClusterId')]"
+					},
+					"LS_Product_REST_API_properties_typeProperties_url": {
+						"value": "[parameters('LS_Product_REST_API_properties_typeProperties_url')]"
+					},
+					"ls_database_sqlserver_properties_typeProperties_server": {
+						"value": "[parameters('ls_database_sqlserver_properties_typeProperties_server')]"
+					},
+					"ls_database_sqlserver_properties_typeProperties_database": {
+						"value": "[parameters('ls_database_sqlserver_properties_typeProperties_database')]"
+					},
+					"ls_database_sqlserver_properties_typeProperties_userName": {
+						"value": "[parameters('ls_database_sqlserver_properties_typeProperties_userName')]"
+					},
+					"ls_lookup_sqldatabase_properties_typeProperties_server": {
+						"value": "[parameters('ls_lookup_sqldatabase_properties_typeProperties_server')]"
+					},
+					"ls_lookup_sqldatabase_properties_typeProperties_database": {
+						"value": "[parameters('ls_lookup_sqldatabase_properties_typeProperties_database')]"
+					},
+					"ls_lookup_sqldatabase_properties_typeProperties_userName": {
+						"value": "[parameters('ls_lookup_sqldatabase_properties_typeProperties_userName')]"
 					}
 				}
 			},
 			"dependsOn": []
+		},
+		{
+			"name": "retaildatapipeline2026_ArmTemplate_1",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2024-03-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_1.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					}
+				}
+			},
+			"dependsOn": [
+				"[resourceId('Microsoft.Resources/deployments', 'retaildatapipeline2026_ArmTemplate_0')]"
+			]
 		}
 	]
 }
