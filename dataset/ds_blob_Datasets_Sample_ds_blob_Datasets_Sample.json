@@ -1,5 +1,5 @@
 {
-	"name": "ds_blob_saleslt_sales_csv",
+	"name": "ds_blob_Datasets_Sample_ds_blob_Datasets_Sample",
 	"properties": {
 		"linkedServiceName": {
 			"referenceName": "ls_blob_retailsourcedataedukron",

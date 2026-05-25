@@ -46,7 +46,7 @@
 				],
 				"outputs": [
 					{
-						"referenceName": "ds_blob_dynamic",
+						"referenceName": "ds_blob_dynamic_ds_blob_Datasets_Sample",
 						"type": "DatasetReference"
 					}
 				]

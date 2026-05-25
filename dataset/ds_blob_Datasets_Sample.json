@@ -1,5 +1,5 @@
 {
-	"name": "ds_blob_Datasets",
+	"name": "ds_blob_Datasets_Sample",
 	"properties": {
 		"linkedServiceName": {
 			"referenceName": "ls_blob_retailsourcedataedukron",

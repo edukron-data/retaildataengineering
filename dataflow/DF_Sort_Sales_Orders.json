@@ -15,7 +15,7 @@
 			"sinks": [
 				{
 					"dataset": {
-						"referenceName": "ds_blob_saleslt_sales_csv",
+						"referenceName": "ds_blob_Datasets_Sample_ds_blob_Datasets_Sample",
 						"type": "DatasetReference"
 					},
 					"name": "BlobSink"
