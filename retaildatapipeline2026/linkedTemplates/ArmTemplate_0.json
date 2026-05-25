@@ -194,7 +194,7 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/ds_blob_Datasets')]",
+			"name": "[concat(parameters('factoryName'), '/ds_blob_Datasets_Sample')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
 			"properties": {
@@ -233,36 +233,7 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/ds_blob_dynamic')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "ls_blob_retailsourcedataedukron",
-					"type": "LinkedServiceReference"
-				},
-				"annotations": [],
-				"type": "DelimitedText",
-				"typeProperties": {
-					"location": {
-						"type": "AzureBlobStorageLocation",
-						"fileName": "temperature.json",
-						"folderPath": "raw",
-						"container": "destination"
-					},
-					"columnDelimiter": ",",
-					"escapeChar": "\\",
-					"firstRowAsHeader": true,
-					"quoteChar": "\""
-				},
-				"schema": []
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/ls_blob_retailsourcedataedukron')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/ds_blob_saleslt_sales_csv')]",
+			"name": "[concat(parameters('factoryName'), '/ds_blob_Datasets_Sample_ds_blob_Datasets_Sample')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
 			"properties": {
@@ -295,6 +266,35 @@
 					},
 					"columnDelimiter": ",",
 					"rowDelimiter": "\n",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_blob_retailsourcedataedukron')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_blob_dynamic_ds_blob_Datasets_Sample')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_blob_retailsourcedataedukron",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": "temperature.json",
+						"folderPath": "raw",
+						"container": "destination"
+					},
+					"columnDelimiter": ",",
 					"escapeChar": "\\",
 					"firstRowAsHeader": true,
 					"quoteChar": "\""
@@ -536,7 +536,7 @@
 						],
 						"outputs": [
 							{
-								"referenceName": "ds_blob_dynamic",
+								"referenceName": "ds_blob_dynamic_ds_blob_Datasets_Sample",
 								"type": "DatasetReference",
 								"parameters": {}
 							}
@@ -553,7 +553,7 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/ds_rest_api')]",
-				"[concat(variables('factoryId'), '/datasets/ds_blob_dynamic')]"
+				"[concat(variables('factoryId'), '/datasets/ds_blob_dynamic_ds_blob_Datasets_Sample')]"
 			]
 		},
 		{
@@ -575,7 +575,7 @@
 					"sinks": [
 						{
 							"dataset": {
-								"referenceName": "ds_blob_saleslt_sales_csv",
+								"referenceName": "ds_blob_Datasets_Sample_ds_blob_Datasets_Sample",
 								"type": "DatasetReference"
 							},
 							"name": "BlobSink"
@@ -606,7 +606,7 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/ds_sql_saleslt_salesorder')]",
-				"[concat(variables('factoryId'), '/datasets/ds_blob_saleslt_sales_csv')]"
+				"[concat(variables('factoryId'), '/datasets/ds_blob_Datasets_Sample_ds_blob_Datasets_Sample')]"
 			]
 		},
 		{
@@ -628,21 +628,21 @@
 					"sinks": [
 						{
 							"dataset": {
-								"referenceName": "ds_blob_saleslt_sales_csv",
+								"referenceName": "ds_blob_Datasets_Sample_ds_blob_Datasets_Sample",
 								"type": "DatasetReference"
 							},
 							"name": "HighValueSink"
 						},
 						{
 							"dataset": {
-								"referenceName": "ds_blob_saleslt_sales_csv",
+								"referenceName": "ds_blob_Datasets_Sample_ds_blob_Datasets_Sample",
 								"type": "DatasetReference"
 							},
 							"name": "MediumValueSink"
 						},
 						{
 							"dataset": {
-								"referenceName": "ds_blob_saleslt_sales_csv",
+								"referenceName": "ds_blob_Datasets_Sample_ds_blob_Datasets_Sample",
 								"type": "DatasetReference"
 							},
 							"name": "LowValueSink"
@@ -687,7 +687,7 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/ds_sql_saleslt_salesorder')]",
-				"[concat(variables('factoryId'), '/datasets/ds_blob_saleslt_sales_csv')]"
+				"[concat(variables('factoryId'), '/datasets/ds_blob_Datasets_Sample_ds_blob_Datasets_Sample')]"
 			]
 		}
 	]
