@@ -71,7 +71,7 @@
 			"properties": {
 				"activities": [
 					{
-						"name": "Get_OpenWeather_Data",
+						"name": "Get_OpenWeather_Data_Sample",
 						"type": "WebActivity",
 						"dependsOn": [],
 						"policy": {
@@ -110,7 +110,7 @@
 			"properties": {
 				"activities": [
 					{
-						"name": "Copy_REST_API_To_Blob",
+						"name": "Copy_REST_API_To_Blob_Sample",
 						"type": "Copy",
 						"dependsOn": [],
 						"policy": {
@@ -181,7 +181,7 @@
 			"properties": {
 				"activities": [
 					{
-						"name": "Run_01_Filter_High_Value_Orders",
+						"name": "Run_01_Filter_High_Value_Orders_Sample",
 						"type": "ExecuteDataFlow",
 						"dependsOn": [],
 						"policy": {
@@ -217,7 +217,7 @@
 						"type": "ExecuteDataFlow",
 						"dependsOn": [
 							{
-								"activity": "Run_01_Filter_High_Value_Orders",
+								"activity": "Run_01_Filter_High_Value_Orders_Sample",
 								"dependencyConditions": [
 									"Succeeded"
 								]
@@ -599,7 +599,7 @@
 			"properties": {
 				"activities": [
 					{
-						"name": "Run_DataFlow_Customer_Sales_To_Blob",
+						"name": "Run_DataFlow_Customer_Sales_To_Blob_Sample",
 						"type": "ExecuteDataFlow",
 						"dependsOn": [],
 						"policy": {
@@ -960,6 +960,68 @@
 				}
 			},
 			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/tr_minutes_openweather')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Started",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "PL_OpenWeather_WebActivity",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Minute",
+						"interval": 1,
+						"startTime": "2026-05-25T10:51:00",
+						"endTime": "2026-05-26T05:07:00",
+						"timeZone": "India Standard Time"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/PL_OpenWeather_WebActivity')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/trigger1')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Started",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "PL_OpenWeather_WebActivity",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "BlobEventsTrigger",
+				"typeProperties": {
+					"blobPathBeginsWith": "/source/blobs/sales",
+					"blobPathEndsWith": ".csv",
+					"ignoreEmptyBlobs": true,
+					"scope": "[parameters('trigger1_properties_typeProperties_scope')]",
+					"events": [
+						"Microsoft.Storage.BlobCreated"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/PL_OpenWeather_WebActivity')]"
+			]
 		},
 		{
 			"name": "[concat(parameters('factoryName'), '/DF_Aggregate_Customer_Sales')]",
@@ -1696,68 +1758,6 @@
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/ds_sql_saleslt_salesorder')]",
 				"[concat(variables('factoryId'), '/datasets/ds_blob_saleslt_sales_csv')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/tr_minutes_openweather')]",
-			"type": "Microsoft.DataFactory/factories/triggers",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"annotations": [],
-				"runtimeState": "Started",
-				"pipelines": [
-					{
-						"pipelineReference": {
-							"referenceName": "PL_OpenWeather_WebActivity",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					}
-				],
-				"type": "ScheduleTrigger",
-				"typeProperties": {
-					"recurrence": {
-						"frequency": "Minute",
-						"interval": 1,
-						"startTime": "2026-05-25T10:51:00",
-						"endTime": "2026-05-26T05:07:00",
-						"timeZone": "India Standard Time"
-					}
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/pipelines/PL_OpenWeather_WebActivity')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/trigger1')]",
-			"type": "Microsoft.DataFactory/factories/triggers",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"annotations": [],
-				"runtimeState": "Stopped",
-				"pipelines": [
-					{
-						"pipelineReference": {
-							"referenceName": "PL_OpenWeather_WebActivity",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					}
-				],
-				"type": "BlobEventsTrigger",
-				"typeProperties": {
-					"blobPathBeginsWith": "/source/blobs/sales",
-					"blobPathEndsWith": ".csv",
-					"ignoreEmptyBlobs": true,
-					"scope": "[parameters('trigger1_properties_typeProperties_scope')]",
-					"events": [
-						"Microsoft.Storage.BlobCreated"
-					]
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/pipelines/PL_OpenWeather_WebActivity')]"
 			]
 		}
 	]
