@@ -3,7 +3,7 @@
 	"properties": {
 		"activities": [
 			{
-				"name": "Run_01_Filter_High_Value_Orders",
+				"name": "Run_01_Filter_High_Value_Orders_Sample",
 				"type": "ExecuteDataFlow",
 				"dependsOn": [],
 				"policy": {
@@ -36,7 +36,7 @@
 				"type": "ExecuteDataFlow",
 				"dependsOn": [
 					{
-						"activity": "Run_01_Filter_High_Value_Orders",
+						"activity": "Run_01_Filter_High_Value_Orders_Sample",
 						"dependencyConditions": [
 							"Succeeded"
 						]

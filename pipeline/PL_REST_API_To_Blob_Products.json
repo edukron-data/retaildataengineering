@@ -3,7 +3,7 @@
 	"properties": {
 		"activities": [
 			{
-				"name": "Copy_REST_API_To_Blob",
+				"name": "Copy_REST_API_To_Blob_Sample",
 				"type": "Copy",
 				"dependsOn": [],
 				"policy": {

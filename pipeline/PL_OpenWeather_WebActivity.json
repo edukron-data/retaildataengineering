@@ -3,7 +3,7 @@
 	"properties": {
 		"activities": [
 			{
-				"name": "Get_OpenWeather_Data",
+				"name": "Get_OpenWeather_Data_Sample",
 				"type": "WebActivity",
 				"dependsOn": [],
 				"policy": {

@@ -3,7 +3,7 @@
 	"properties": {
 		"activities": [
 			{
-				"name": "Run_DataFlow_Customer_Sales_To_Blob",
+				"name": "Run_DataFlow_Customer_Sales_To_Blob_Sample",
 				"type": "ExecuteDataFlow",
 				"dependsOn": [],
 				"policy": {
