@@ -54,12 +54,55 @@
 		"ls_lookup_sqldatabase_properties_typeProperties_userName": {
 			"type": "string",
 			"defaultValue": "Edukron"
+		},
+		"trigger1_properties_typeProperties_scope": {
+			"type": "string",
+			"defaultValue": "/subscriptions/60fbd330-3eed-4456-94d1-e889b76bb58d/resourceGroups/jandataengineering/providers/Microsoft.Storage/storageAccounts/retailsourcedataedukron"
 		}
 	},
 	"variables": {
 		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
 	},
 	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/PL_OpenWeather_WebActivity')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Get_OpenWeather_Data",
+						"type": "WebActivity",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"method": "GET",
+							"headers": {},
+							"url": {
+								"value": "http://api.openweathermap.org/data/2.5/weather?appid=30d2e4f9114c412310bc7b361aed5f7a&q=@{pipeline().parameters.city}",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"city": {
+						"type": "String",
+						"defaultValue": "Bangalore"
+					}
+				},
+				"annotations": []
+			},
+			"dependsOn": []
+		},
 		{
 			"name": "[concat(parameters('factoryName'), '/AzureDatabricks1')]",
 			"type": "Microsoft.DataFactory/factories/linkedServices",
@@ -147,45 +190,6 @@
 						"value": "[parameters('ls_lookup_sqldatabase_password')]"
 					}
 				}
-			},
-			"dependsOn": []
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/PL_OpenWeather_WebActivity')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"activities": [
-					{
-						"name": "Get_OpenWeather_Data",
-						"type": "WebActivity",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"method": "GET",
-							"headers": {},
-							"url": {
-								"value": "http://api.openweathermap.org/data/2.5/weather?appid=30d2e4f9114c412310bc7b361aed5f7a&q=@{pipeline().parameters.city}",
-								"type": "Expression"
-							}
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {}
-				},
-				"parameters": {
-					"city": {
-						"type": "String",
-						"defaultValue": "Bangalore"
-					}
-				},
-				"annotations": []
 			},
 			"dependsOn": []
 		},
@@ -302,6 +306,26 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/ds_rest_api')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_Product_REST_API",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "RestResource",
+				"typeProperties": {
+					"relativeUrl": "data/2.5/weather?appid=30d2e4f9114c412310bc7b361aed5f7a&q=Hyderabad"
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LS_Product_REST_API')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/ds_rest_products')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -400,23 +424,65 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/ds_rest_api')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
+			"name": "[concat(parameters('factoryName'), '/tr_minutes_openweather')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
 			"apiVersion": "2018-06-01",
 			"properties": {
-				"linkedServiceName": {
-					"referenceName": "LS_Product_REST_API",
-					"type": "LinkedServiceReference"
-				},
 				"annotations": [],
-				"type": "RestResource",
+				"runtimeState": "Started",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "PL_OpenWeather_WebActivity",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "ScheduleTrigger",
 				"typeProperties": {
-					"relativeUrl": "data/2.5/weather?appid=30d2e4f9114c412310bc7b361aed5f7a&q=Hyderabad"
-				},
-				"schema": []
+					"recurrence": {
+						"frequency": "Minute",
+						"interval": 1,
+						"startTime": "2026-05-25T10:43:00",
+						"endTime": "2026-05-26T05:07:00",
+						"timeZone": "India Standard Time"
+					}
+				}
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/LS_Product_REST_API')]"
+				"[concat(variables('factoryId'), '/pipelines/PL_OpenWeather_WebActivity')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/trigger1')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Stopped",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "PL_OpenWeather_WebActivity",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "BlobEventsTrigger",
+				"typeProperties": {
+					"blobPathBeginsWith": "/source/blobs/sales",
+					"blobPathEndsWith": ".csv",
+					"ignoreEmptyBlobs": true,
+					"scope": "[parameters('trigger1_properties_typeProperties_scope')]",
+					"events": [
+						"Microsoft.Storage.BlobCreated"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/PL_OpenWeather_WebActivity')]"
 			]
 		},
 		{
@@ -621,114 +687,6 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/ds_sql_saleslt_salesorder')]",
-				"[concat(variables('factoryId'), '/datasets/ds_blob_saleslt_sales_csv')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/DF_Customer_Name_Cleanup')]",
-			"type": "Microsoft.DataFactory/factories/dataflows",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"type": "MappingDataFlow",
-				"typeProperties": {
-					"sources": [
-						{
-							"dataset": {
-								"referenceName": "ds_sql_saleslt_customer",
-								"type": "DatasetReference"
-							},
-							"name": "CustomerSource"
-						}
-					],
-					"sinks": [
-						{
-							"dataset": {
-								"referenceName": "ds_blob_saleslt_sales_csv",
-								"type": "DatasetReference"
-							},
-							"name": "BlobSink"
-						}
-					],
-					"transformations": [
-						{
-							"name": "CleanCustomerName"
-						}
-					],
-					"scriptLines": [
-						"source(output(",
-						"          CustomerID as integer,",
-						"          FirstName as string,",
-						"          LastName as string,",
-						"          EmailAddress as string",
-						"     ),",
-						"     allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     isolationLevel: 'READ_UNCOMMITTED',",
-						"     format: 'table') ~> CustomerSource",
-						"CustomerSource derive(FirstName = trim(initCap(FirstName)),",
-						"          LastName = trim(initCap(LastName)),",
-						"          EmailAddress = lower(trim(EmailAddress))) ~> CleanCustomerName",
-						"CleanCustomerName sink(allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     partitionFileNames:['clean_customer_names.csv']) ~> BlobSink"
-					]
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/ds_sql_saleslt_customer')]",
-				"[concat(variables('factoryId'), '/datasets/ds_blob_saleslt_sales_csv')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/DF_Derived_Column_Customer')]",
-			"type": "Microsoft.DataFactory/factories/dataflows",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"type": "MappingDataFlow",
-				"typeProperties": {
-					"sources": [
-						{
-							"dataset": {
-								"referenceName": "ds_sql_saleslt_customer",
-								"type": "DatasetReference"
-							},
-							"name": "CustomerSource"
-						}
-					],
-					"sinks": [
-						{
-							"dataset": {
-								"referenceName": "ds_blob_saleslt_sales_csv",
-								"type": "DatasetReference"
-							},
-							"name": "BlobSink"
-						}
-					],
-					"transformations": [
-						{
-							"name": "DerivedCustomerColumns"
-						}
-					],
-					"scriptLines": [
-						"source(output(",
-						"          CustomerID as integer,",
-						"          FirstName as string,",
-						"          LastName as string",
-						"     ),",
-						"     allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     isolationLevel: 'READ_UNCOMMITTED',",
-						"     format: 'table') ~> CustomerSource",
-						"CustomerSource derive(FullName = FirstName + ' ' + LastName,",
-						"          LoadDate = currentDate()) ~> DerivedCustomerColumns",
-						"DerivedCustomerColumns sink(allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     partitionFileNames:['customer_fullname.csv']) ~> BlobSink"
-					]
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/ds_sql_saleslt_customer')]",
 				"[concat(variables('factoryId'), '/datasets/ds_blob_saleslt_sales_csv')]"
 			]
 		}

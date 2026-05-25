@@ -41,6 +41,9 @@
 		"ls_lookup_sqldatabase_properties_typeProperties_userName": {
 			"value": "Edukron"
 		},
+		"trigger1_properties_typeProperties_scope": {
+			"value": "/subscriptions/60fbd330-3eed-4456-94d1-e889b76bb58d/resourceGroups/jandataengineering/providers/Microsoft.Storage/storageAccounts/retailsourcedataedukron"
+		},
 		"containerUri": {
 			"value": ""
 		},

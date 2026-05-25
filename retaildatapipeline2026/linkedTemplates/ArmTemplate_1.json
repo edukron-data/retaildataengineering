@@ -13,6 +13,108 @@
 	},
 	"resources": [
 		{
+			"name": "[concat(parameters('factoryName'), '/DF_Customer_Name_Cleanup')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "ds_sql_saleslt_customer",
+								"type": "DatasetReference"
+							},
+							"name": "CustomerSource"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "ds_blob_saleslt_sales_csv",
+								"type": "DatasetReference"
+							},
+							"name": "BlobSink"
+						}
+					],
+					"transformations": [
+						{
+							"name": "CleanCustomerName"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          CustomerID as integer,",
+						"          FirstName as string,",
+						"          LastName as string,",
+						"          EmailAddress as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     format: 'table') ~> CustomerSource",
+						"CustomerSource derive(FirstName = trim(initCap(FirstName)),",
+						"          LastName = trim(initCap(LastName)),",
+						"          EmailAddress = lower(trim(EmailAddress))) ~> CleanCustomerName",
+						"CleanCustomerName sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     partitionFileNames:['clean_customer_names.csv']) ~> BlobSink"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DF_Derived_Column_Customer')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "ds_sql_saleslt_customer",
+								"type": "DatasetReference"
+							},
+							"name": "CustomerSource"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "ds_blob_saleslt_sales_csv",
+								"type": "DatasetReference"
+							},
+							"name": "BlobSink"
+						}
+					],
+					"transformations": [
+						{
+							"name": "DerivedCustomerColumns"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          CustomerID as integer,",
+						"          FirstName as string,",
+						"          LastName as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     format: 'table') ~> CustomerSource",
+						"CustomerSource derive(FullName = FirstName + ' ' + LastName,",
+						"          LoadDate = currentDate()) ~> DerivedCustomerColumns",
+						"DerivedCustomerColumns sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     partitionFileNames:['customer_fullname.csv']) ~> BlobSink"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/DF_Filter_High_Value_Orders')]",
 			"type": "Microsoft.DataFactory/factories/dataflows",
 			"apiVersion": "2018-06-01",
@@ -890,10 +992,12 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/dataflows/DF_Filter_High_Value_Orders')]",
+				"[concat(variables('factoryId'), '/dataflows/DF_Derived_Column_Customer')]",
 				"[concat(variables('factoryId'), '/dataflows/DF_Join_Customer_Sales')]",
 				"[concat(variables('factoryId'), '/dataflows/DF_Sort_Sales_Orders')]",
 				"[concat(variables('factoryId'), '/dataflows/DF_Select_Customer_Columns')]",
 				"[concat(variables('factoryId'), '/dataflows/DF_Remove_Duplicate_Customers')]",
+				"[concat(variables('factoryId'), '/dataflows/DF_Customer_Name_Cleanup')]",
 				"[concat(variables('factoryId'), '/dataflows/DF_Lookup_Customer_Orders')]"
 			]
 		},
